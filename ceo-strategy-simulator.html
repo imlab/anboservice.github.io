@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEO 用户战略模拟器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C96D;
+    --gold-dim: #8B6E2E;
+    --ink: #0A0A0B;
+    --ink-2: #111114;
+    --ink-3: #1A1A1F;
+    --ink-4: #242430;
+    --silver: #8A8A9A;
+    --silver-light: #C2C2D0;
+    --white: #F4F2EC;
+    --accent-red: #C94C4C;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ink);
+    color: var(--white);
+    font-family: 'Noto Serif SC', serif;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ─── NOISE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridPulse 8s ease-in-out infinite;
+  }
+
+  @keyframes gridPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+    top: -200px;
+    right: -150px;
+    animation: glowDrift 12s ease-in-out infinite;
+  }
+
+  .hero-glow-2 {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 70%);
+    bottom: 50px;
+    left: -100px;
+    animation: glowDrift 15s ease-in-out infinite reverse;
+  }
+
+  @keyframes glowDrift {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(30px, -20px); }
+    66% { transform: translate(-20px, 30px); }
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 60px;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--gold);
+    display: grid;
+    place-items: center;
+    position: relative;
+  }
+
+  .logo-mark::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    background: var(--gold);
+    opacity: 0.3;
+  }
+
+  .logo-mark span {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--gold);
+    position: relative;
+    z-index: 1;
+  }
+
+  .logo-text {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--silver-light);
+    text-transform: uppercase;
+  }
+
+  .nav-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+    padding: 5px 12px;
+    letter-spacing: 0.1em;
+  }
+
+  /* ─── HERO CONTENT ─── */
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px 60px;
+    max-width: 1100px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .hero-title {
+    font-size: clamp(52px, 8vw, 96px);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.35s forwards;
+  }
+
+  .hero-title .line-gold {
+    color: var(--gold);
+    display: block;
+  }
+
+  .hero-title .line-dim {
+    color: var(--silver);
+    font-weight: 400;
+    font-size: 0.55em;
+    letter-spacing: 0.02em;
+    display: block;
+    margin-top: 8px;
+  }
+
+  .hero-desc {
+    max-width: 580px;
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--silver-light);
+    margin-top: 36px;
+    margin-bottom: 52px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.5s forwards;
+  }
+
+  .hero-desc em {
+    color: var(--gold-light);
+    font-style: normal;
+  }
+
+  /* ─── INPUT MOCK ─── */
+  .hero-input-wrapper {
+    display: flex;
+    gap: 0;
+    max-width: 560px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.65s forwards;
+  }
+
+  .hero-input {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-right: none;
+    padding: 16px 24px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 15px;
+    color: var(--white);
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .hero-input::placeholder { color: var(--silver); }
+  .hero-input:focus { border-color: var(--gold); }
+
+  .hero-btn {
+    background: var(--gold);
+    border: none;
+    padding: 16px 28px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.3s;
+    white-space: nowrap;
+  }
+
+  .hero-btn:hover { background: var(--gold-light); }
+
+  .hero-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--silver);
+    margin-top: 16px;
+    letter-spacing: 0.05em;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.8s forwards;
+  }
+
+  /* ─── HERO STATS ─── */
+  .hero-stats {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    gap: 0;
+    border-top: 1px solid rgba(201,168,76,0.12);
+    opacity: 0;
+    animation: fadeUp 0.8s 1s forwards;
+  }
+
+  .stat-item {
+    flex: 1;
+    padding: 32px 60px;
+    border-right: 1px solid rgba(201,168,76,0.12);
+  }
+
+  .stat-item:last-child { border-right: none; }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--silver);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── SECTION COMMONS ─── */
+  section { padding: 120px 60px; position: relative; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 56px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(201,168,76,0.4), transparent);
+  }
+
+  .section-title {
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+
+  /* ─── VALUE SECTION ─── */
+  .value-section {
+    background: var(--ink-2);
+    border-top: 1px solid rgba(201,168,76,0.1);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+
+  .value-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    margin-top: 0;
+    border: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .value-card {
+    padding: 52px 44px;
+    border-right: 1px solid rgba(201,168,76,0.1);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.4s;
+  }
+
+  .value-card:last-child { border-right: none; }
+
+  .value-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s;
+  }
+
+  .value-card:hover::before { transform: scaleX(1); }
+  .value-card:hover { background: rgba(201,168,76,0.04); }
+
+  .value-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 64px;
+    font-weight: 800;
+    color: rgba(201,168,76,0.12);
+    line-height: 1;
+    margin-bottom: 24px;
+  }
+
+  .value-icon {
+    font-size: 28px;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .value-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+
+  .value-desc {
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--silver);
+  }
+
+  /* ─── HOW IT WORKS ─── */
+  .how-section { background: var(--ink); }
+
+  .pipeline {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr 40px 1fr;
+    gap: 0;
+    align-items: start;
+    margin-top: 16px;
+  }
+
+  .pipeline-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 60px;
+    color: var(--gold-dim);
+    font-size: 20px;
+  }
+
+  .pipeline-step {
+    background: var(--ink-3);
+    border: 1px solid rgba(201,168,76,0.15);
+    padding: 40px 36px;
+    position: relative;
+  }
+
+  .step-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    background: rgba(201,168,76,0.1);
+    display: inline-block;
+    padding: 4px 10px;
+    margin-bottom: 20px;
+  }
+
+  .step-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    color: var(--white);
+  }
+
+  .step-sub {
+    font-size: 12px;
+    color: var(--silver);
+    margin-bottom: 24px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .step-items {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .step-items li {
+    font-size: 13px;
+    color: var(--silver-light);
+    padding-left: 18px;
+    position: relative;
+    line-height: 1.6;
+  }
+
+  .step-items li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--gold-dim);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ─── SIX STAGES ─── */
+  .stages-section { background: var(--ink-2); }
+
+  .stages-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.1);
+    margin-top: 16px;
+  }
+
+  .stage-card {
+    background: var(--ink-2);
+    padding: 44px 40px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+
+  .stage-card:hover { background: var(--ink-3); }
+
+  .stage-num-bg {
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 100px;
+    font-weight: 800;
+    color: rgba(201,168,76,0.05);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .stage-phase {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    margin-bottom: 12px;
+  }
+
+  .stage-name {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+
+  .stage-arrow {
+    color: var(--gold-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .stage-task {
+    font-size: 14px;
+    color: var(--silver);
+    line-height: 1.7;
+  }
+
+  .stage-task strong {
+    color: var(--gold-light);
+    font-weight: 400;
+  }
+
+  /* ─── TARGET USERS ─── */
+  .users-section { background: var(--ink); }
+
+  .users-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .users-left .section-title { margin-bottom: 40px; }
+
+  .user-card {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 36px;
+    padding-bottom: 36px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .user-card:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .user-icon {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--gold-dim);
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .user-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .user-desc {
+    font-size: 13px;
+    color: var(--silver);
+    line-height: 1.8;
+  }
+
+  .users-right {
+    background: var(--ink-3);
+    border: 1px solid rgba(201,168,76,0.15);
+    padding: 48px;
+  }
+
+  .trait-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    margin-bottom: 32px;
+  }
+
+  .trait-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .trait-check {
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--gold);
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    color: var(--gold);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .trait-text {
+    font-size: 14px;
+    color: var(--silver-light);
+    line-height: 1.7;
+  }
+
+  /* ─── REPORT PREVIEW ─── */
+  .report-section { background: var(--ink-2); }
+
+  .report-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 64px;
+    align-items: start;
+    margin-top: 16px;
+  }
+
+  .report-toc { }
+
+  .report-toc-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    margin-bottom: 24px;
+  }
+
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .toc-item:hover .toc-name { color: var(--gold); }
+
+  .toc-n {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold-dim);
+    flex-shrink: 0;
+  }
+
+  .toc-name {
+    font-size: 14px;
+    color: var(--silver-light);
+    transition: color 0.2s;
+    line-height: 1.5;
+  }
+
+  .report-mock {
+    background: var(--ink-4);
+    border: 1px solid rgba(201,168,76,0.2);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .mock-header {
+    background: rgba(201,168,76,0.08);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mock-dots { display: flex; gap: 6px; }
+  .mock-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+  }
+
+  .mock-title-bar {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--silver);
+    margin-left: 8px;
+  }
+
+  .mock-body { padding: 28px 28px; }
+
+  .mock-company-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    background: rgba(201,168,76,0.1);
+    display: inline-block;
+    padding: 3px 10px;
+    margin-bottom: 16px;
+  }
+
+  .mock-h1 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    line-height: 1.3;
+  }
+
+  .mock-evidence-block {
+    background: rgba(201,168,76,0.05);
+    border-left: 2px solid var(--gold);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+
+  .evidence-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+  }
+
+  .evidence-text {
+    font-size: 12px;
+    color: var(--silver-light);
+    line-height: 1.6;
+  }
+
+  .evidence-source {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gold-dim);
+    margin-top: 8px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .mock-action-box {
+    background: var(--ink);
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 20px;
+    margin-top: 20px;
+  }
+
+  .action-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    margin-bottom: 10px;
+  }
+
+  .action-text {
+    font-size: 12px;
+    color: var(--white);
+    line-height: 1.7;
+  }
+
+  /* ─── RISK SECTION ─── */
+  .risk-section { background: var(--ink); }
+
+  .risk-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-top: 16px;
+  }
+
+  .risk-card {
+    background: var(--ink);
+    padding: 40px 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .risk-left {}
+
+  .risk-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent-red);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+
+  .risk-title {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .risk-right {}
+
+  .risk-fix-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+
+  .risk-fix {
+    font-size: 13px;
+    color: var(--silver);
+    line-height: 1.7;
+  }
+
+  /* ─── CTA ─── */
+  .cta-section {
+    background: var(--ink-2);
+    border-top: 1px solid rgba(201,168,76,0.15);
+    text-align: center;
+    padding: 120px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-glow {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .cta-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.25em;
+    margin-bottom: 32px;
+  }
+
+  .cta-title {
+    font-size: clamp(36px, 5vw, 60px);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-sub {
+    font-size: 16px;
+    color: var(--silver);
+    max-width: 480px;
+    margin: 0 auto 52px;
+    line-height: 1.8;
+  }
+
+  .mvp-checklist {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+    background: var(--ink-3);
+    border: 1px solid rgba(201,168,76,0.2);
+    padding: 36px 48px;
+    margin-bottom: 52px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .mvp-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+    color: var(--silver-light);
+  }
+
+  .mvp-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    padding: 18px 40px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary:hover {
+    background: var(--gold-light);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+    padding: 18px 40px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: border-color 0.3s, color 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--ink);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 40px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-quote {
+    font-size: 13px;
+    color: var(--silver);
+    font-style: italic;
+    max-width: 400px;
+    line-height: 1.8;
+  }
+
+  .footer-right {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--silver);
+    letter-spacing: 0.1em;
+    text-align: right;
+  }
+
+  /* ─── SCROLL REVEAL ─── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    nav { padding: 20px 24px; }
+    section { padding: 80px 24px; }
+    .hero-content { padding: 60px 24px 40px; }
+    .hero-stats { flex-direction: column; }
+    .stat-item { padding: 24px; border-right: none; border-bottom: 1px solid rgba(201,168,76,0.12); }
+    .value-grid { grid-template-columns: 1fr; }
+    .pipeline { grid-template-columns: 1fr; }
+    .pipeline-arrow { display: none; }
+    .stages-grid { grid-template-columns: 1fr; }
+    .users-layout { grid-template-columns: 1fr; gap: 48px; }
+    .report-layout { grid-template-columns: 1fr; }
+    .risk-grid { grid-template-columns: 1fr; }
+    .risk-card { grid-template-columns: 1fr; gap: 20px; }
+    .footer { flex-direction: column; gap: 24px; text-align: center; }
+    .footer-right { text-align: center; }
+    .hero-input-wrapper { flex-direction: column; }
+    .hero-input { border-right: 1px solid rgba(201,168,76,0.3); border-bottom: none; }
+    .cta-buttons { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow-2"></div>
+
+  <nav>
+    <div class="nav-logo">
+      <div class="logo-mark"><span>C</span></div>
+      <span class="logo-text">CEO 用户战略模拟器</span>
+    </div>
+    <span class="nav-badge">BETA · MVP</span>
+  </nav>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">AI 驱动战略训练工具</div>
+    <h1 class="hero-title">
+      <span class="line-gold">站上成功者的</span>
+      <span class="line-gold">肩膀决策</span>
+      <span class="line-dim">用用户行为证据，还原 CEO 的决策路径</span>
+    </h1>
+    <p class="hero-desc">
+      输入一家公司，AI 还原它在<em>立项、研发、销售、融资</em>等关键节点看到的用户证据与决策逻辑——
+      让你了解这家公司 CEO 的决策方式，从而获得思路启发，形成更适合自己团队的更优决策。
+    </p>
+
+    <div class="hero-input-wrapper">
+      <input class="hero-input" type="text" placeholder="输入公司名称，例：拓竹、虬龙、清闲…">
+      <button class="hero-btn">开始分析 →</button>
+    </div>
+    <p class="hero-sub">可选：补充你的项目一句话简介，用于对比自检</p>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">6</div>
+      <div class="stat-label">发展阶段全覆盖<br>立项→研发→销售→融资</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">3</div>
+      <div class="stat-label">AI 工作流协同<br>Gemini + DeepSeek + 结构化报告</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">15'</div>
+      <div class="stat-label">出报告速度<br>3 分钟上手，15 分钟获得洞察</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">证据可溯源<br>每个用户行为附原始链接</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── VALUE ─── -->
+<section class="value-section">
+  <div class="section-label">核心价值</div>
+  <div class="value-grid reveal">
+    <div class="value-card">
+      <div class="value-num">01</div>
+      <span class="value-icon">🔍</span>
+      <div class="value-title">学逻辑</div>
+      <div class="value-desc">看清成功企业在方向探索期、产品定义期、研发期、销售期、规模化、融资期——面对什么两难选择，最终选了哪个，尤其是看到了哪些用户行为证据支撑了那个决策。</div>
+    </div>
+    <div class="value-card">
+      <div class="value-num">02</div>
+      <span class="value-icon">✓</span>
+      <div class="value-title">做自检</div>
+      <div class="value-desc">对照自己的项目，逐个阶段打勾：你是否也有同类证据？缺了什么？那个缺口就是你的认知盲区或行动短板。</div>
+    </div>
+    <div class="value-card">
+      <div class="value-num">03</div>
+      <span class="value-icon">→</span>
+      <div class="value-title">定行动</div>
+      <div class="value-desc">报告自动给出"下周最值得做的一件验证事"——不是泛泛建议，而是具体到"去哪个社区找什么关键词"或"拉哪类数据做分层"。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS ─── -->
+<section class="how-section">
+  <div class="section-label">AI 工作流</div>
+  <h2 class="section-title reveal">后台三步，对用户透明</h2>
+
+  <div class="pipeline reveal">
+    <div class="pipeline-step">
+      <div class="step-tag">STEP 01</div>
+      <div class="step-name">Gemini</div>
+      <div class="step-sub">深度情报研究</div>
+      <ul class="step-items">
+        <li>用户自创的"笨办法"</li>
+        <li>早期用户画像与分层数据</li>
+        <li>众筹档位售罄速度、退款原因</li>
+        <li>社区里的"高赞低评论"沉默需求</li>
+        <li>粘性设计（内容、积分、信任机制）</li>
+        <li>竞争中的叙事与用户反应</li>
+      </ul>
+    </div>
+
+    <div class="pipeline-arrow">→</div>
+
+    <div class="pipeline-step">
+      <div class="step-tag">STEP 02</div>
+      <div class="step-name">DeepSeek</div>
+      <div class="step-sub">结构化拆解</div>
+      <ul class="step-items">
+        <li>方向探索期 → 识别被压抑需求</li>
+        <li>产品定义期 → 问题-方案匹配验证</li>
+        <li>研发期 → 低成本原型+真实测试</li>
+        <li>销售期 → 高价值用户识别分层</li>
+        <li>规模化 → 护城河构建</li>
+        <li>融资期 → 投资人看重的证据类型</li>
+      </ul>
+    </div>
+
+    <div class="pipeline-arrow">→</div>
+
+    <div class="pipeline-step">
+      <div class="step-tag">STEP 03</div>
+      <div class="step-name">报告输出</div>
+      <div class="step-sub">Markdown / Notion / PDF</div>
+      <ul class="step-items">
+        <li>概览卡片 + 成功逻辑总结</li>
+        <li>六阶段深度拆解</li>
+        <li>与你项目的对比自检表</li>
+        <li>组织能力提示（可选）</li>
+        <li>下一步可执行行动建议</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SIX STAGES ─── -->
+<section class="stages-section">
+  <div class="section-label">六阶段框架</div>
+  <h2 class="section-title reveal">覆盖企业从 0 到 N 的完整路径</h2>
+
+  <div class="stages-grid reveal">
+    <div class="stage-card">
+      <div class="stage-num-bg">01</div>
+      <div class="stage-phase">PHASE 01</div>
+      <div class="stage-name">方向探索期</div>
+      <span class="stage-arrow">→ 识别被压抑的需求</span>
+      <div class="stage-task">用户还没说清楚自己的痛苦，但已经在用<strong>奇怪的方式</strong>绕过问题。那些笨办法，就是方向的信号灯。</div>
+    </div>
+
+    <div class="stage-card">
+      <div class="stage-num-bg">02</div>
+      <div class="stage-phase">PHASE 02</div>
+      <div class="stage-name">产品定义期</div>
+      <span class="stage-arrow">→ 问题-方案匹配验证</span>
+      <div class="stage-task">你解决的问题，真的是用户<strong>最痛的问题吗</strong>？这一阶段的用户证据，决定了你是否走在对的赛道上。</div>
+    </div>
+
+    <div class="stage-card">
+      <div class="stage-num-bg">03</div>
+      <div class="stage-phase">PHASE 03</div>
+      <div class="stage-name">研发期</div>
+      <span class="stage-arrow">→ 低成本原型 + 真实用户测试</span>
+      <div class="stage-task">不是做完才验证，而是<strong>边做边验证</strong>。用最低成本的原型，让真实用户告诉你哪里错了。</div>
+    </div>
+
+    <div class="stage-card">
+      <div class="stage-num-bg">04</div>
+      <div class="stage-phase">PHASE 04</div>
+      <div class="stage-name">销售期</div>
+      <span class="stage-arrow">→ 高价值用户识别与分层</span>
+      <div class="stage-task">不是所有用户都值得同等投入。<strong>谁付了最多钱、用得最频繁、带来了最多推荐？</strong> 那就是你的核心用户。</div>
+    </div>
+
+    <div class="stage-card">
+      <div class="stage-num-bg">05</div>
+      <div class="stage-phase">PHASE 05</div>
+      <div class="stage-name">规模化发展期</div>
+      <span class="stage-arrow">→ 护城河构建</span>
+      <div class="stage-task">内容、社区、信任机制——这些<strong>软性资产</strong>往往比技术壁垒更难被复制，也更持久。</div>
+    </div>
+
+    <div class="stage-card">
+      <div class="stage-num-bg">06</div>
+      <div class="stage-phase">PHASE 06</div>
+      <div class="stage-name">融资期</div>
+      <span class="stage-arrow">→ 投资人看重的用户证据类型</span>
+      <div class="stage-task">投资人不只看数字，他们看的是<strong>数字背后的用户行为逻辑</strong>。哪些证据最有说服力，这一阶段告诉你。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TARGET USERS ─── -->
+<section class="users-section">
+  <div class="section-label">目标用户</div>
+  <div class="users-layout reveal">
+    <div class="users-left">
+      <h2 class="section-title">三类"正在进行时"的创业者</h2>
+
+      <div class="user-card">
+        <div class="user-icon">⚙</div>
+        <div>
+          <div class="user-title">正在做出产品</div>
+          <div class="user-desc">已有原型或早期销量，但不确定方向对不对、下一步该验证什么。需要一面镜子，照出自己的盲区。</div>
+        </div>
+      </div>
+
+      <div class="user-card">
+        <div class="user-icon">📈</div>
+        <div>
+          <div class="user-title">正在提升认知</div>
+          <div class="user-desc">不想靠"蛮干"积累经验，希望系统化训练战略判断力。用真实商业案例校准直觉，比看书快 10 倍。</div>
+        </div>
+      </div>
+
+      <div class="user-card">
+        <div class="user-icon">👥</div>
+        <div>
+          <div class="user-title">正在打造组织</div>
+          <div class="user-desc">3-30 人团队，需要让全员建立"用户洞察驱动决策"的工作语言。让团队说同一种战略语言。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="users-right">
+      <div class="trait-label">共同特征 / COMMON TRAITS</div>
+
+      <div class="trait-item">
+        <div class="trait-check">✓</div>
+        <div class="trait-text">还在走 0→1→N，希望用最小的成本预演"CEO 该有的思考方式"</div>
+      </div>
+      <div class="trait-item">
+        <div class="trait-check">✓</div>
+        <div class="trait-text">做决策时常凭直觉，但直觉有时候感觉不够靠谱</div>
+      </div>
+      <div class="trait-item">
+        <div class="trait-check">✓</div>
+        <div class="trait-text">看了很多成功案例，但不知道这些决策背后的用户证据是什么</div>
+      </div>
+      <div class="trait-item">
+        <div class="trait-check">✓</div>
+        <div class="trait-text">需要具体的、可执行的下一步行动，而不是"多想想"</div>
+      </div>
+
+      <div style="margin-top:40px; padding-top:32px; border-top:1px solid rgba(201,168,76,0.2);">
+        <div class="trait-label">成功标准</div>
+        <div style="font-size:14px; color:var(--silver-light); line-height:1.8;">
+          读完报告后，你能明确说出：<br>
+          <span style="color:var(--gold);">「原来我卡在 __ 阶段，缺的是 __ 类用户证据。」</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── REPORT PREVIEW ─── -->
+<section class="report-section">
+  <div class="section-label">报告结构</div>
+  <h2 class="section-title reveal">5-7 页，每一页都可执行</h2>
+
+  <div class="report-layout reveal">
+    <div class="report-toc">
+      <div class="report-toc-title">REPORT CONTENTS</div>
+
+      <div class="toc-item">
+        <span class="toc-n">01</span>
+        <span class="toc-name">概览卡片 — 阶段定位 + 3 个关键用户行为证据 + 一句话成功逻辑</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-n">02</span>
+        <span class="toc-name">六阶段深度拆解 — 决策、行动、证据、误区（每阶段一节）</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-n">03</span>
+        <span class="toc-name">对比自检表 — 六阶段 × 你是否已有同类证据？高亮缺失项</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-n">04</span>
+        <span class="toc-name">组织能力提示 — 该阶段需要什么角色、技能、文化？（可选）</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-n">05</span>
+        <span class="toc-name">下一步行动建议 — 下周就能执行的一件具体调研/实验</span>
+      </div>
+
+      <div style="margin-top:40px; padding:24px; background:rgba(201,168,76,0.05); border:1px solid rgba(201,168,76,0.2);">
+        <div style="font-family:'DM Mono',monospace; font-size:10px; color:var(--gold); letter-spacing:0.2em; margin-bottom:12px;">质量底线</div>
+        <div style="font-size:13px; color:var(--silver); line-height:1.9;">
+          每个证据必须附带来源链接<br>
+          报告中不允许出现"可能""推测"<br>
+          最后行动必须下周就能执行
+        </div>
+      </div>
+    </div>
+
+    <div class="report-mock">
+      <div class="mock-header">
+        <div class="mock-dots">
+          <div class="mock-dot"></div>
+          <div class="mock-dot"></div>
+          <div class="mock-dot"></div>
+        </div>
+        <div class="mock-title-bar">report_qiulong_2024.md</div>
+      </div>
+      <div class="mock-body">
+        <div class="mock-company-tag">CASE: 虬龙 · 销售期</div>
+        <div class="mock-h1">用户行为证据 #1：众筹首日售罄</div>
+
+        <div class="mock-evidence-block">
+          <div class="evidence-label">用户行为证据</div>
+          <div class="evidence-text">虬龙在 Kickstarter 上线 6 小时内，标准款众筹目标量达成 340%，高端档位（$899）在 2 小时内售罄，退款率低于 2.1%，显著低于同类硬件项目平均退款率（约 8%）。</div>
+          <div class="evidence-source">↗ kickstarter.com/projects/qiulong/... · 2023-09-14</div>
+        </div>
+
+        <div class="mock-evidence-block">
+          <div class="evidence-label">决策逻辑</div>
+          <div class="evidence-text">团队优先押注"高溢价用户"而非走量。高端档位优先开发、优先交付，以此锁定愿意付费的早期大使群体，而非追求短期 GMV 最大化。</div>
+          <div class="evidence-source">↗ reddit.com/r/3Dprinting · 高赞评论 · 2023-10-02</div>
+        </div>
+
+        <div class="mock-action-box">
+          <div class="action-label">⚡ 你的下周行动</div>
+          <div class="action-text">去 Reddit r/你的品类 搜索 "workaround" "problem" "wish"，整理 3 个高频笨办法，与虬龙早期社区帖子对比——你的用户是否也有同类信号还未被捕捉？</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── RISK ─── -->
+<section class="risk-section">
+  <div class="section-label">风险与边界</div>
+  <h2 class="section-title reveal">我们选择坦诚</h2>
+
+  <div class="risk-grid reveal">
+    <div class="risk-card">
+      <div class="risk-left">
+        <div class="risk-tag">⚠ 风险</div>
+        <div class="risk-title">AI 可能编造或曲解信息</div>
+      </div>
+      <div class="risk-right">
+        <div class="risk-fix-label">缓解措施</div>
+        <div class="risk-fix">每个证据附原始链接，要求用户交叉验证。报告是出发点，不是终点。</div>
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-left">
+        <div class="risk-tag">⚠ 风险</div>
+        <div class="risk-title">公开信息不完整（尤其早期公司）</div>
+      </div>
+      <div class="risk-right">
+        <div class="risk-fix-label">缓解措施</div>
+        <div class="risk-fix">允许用户手动补充已知信息；报告会标注"信息缺口"，缺口本身也是洞察。</div>
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-left">
+        <div class="risk-tag">⚠ 风险</div>
+        <div class="risk-title">不能替代行业深度认知</div>
+      </div>
+      <div class="risk-right">
+        <div class="risk-fix-label">缓解措施</div>
+        <div class="risk-fix">本工具只提供"用户视角"的战略判断，技术、供应链、财务仍需用户自己判断。</div>
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-left">
+        <div class="risk-tag">⚠ 风险</div>
+        <div class="risk-title">不保证商业成功</div>
+      </div>
+      <div class="risk-right">
+        <div class="risk-fix-label">缓解措施</div>
+        <div class="risk-fix">训练的是"少犯低级错误"，不是"一定能成"。模拟器让你的直觉更有根基。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA ─── -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="cta-eyebrow">MVP · 最小可行产品</div>
+  <h2 class="cta-title reveal">第一次发布，只做一件事</h2>
+  <p class="cta-sub reveal">一份可复制的提示词模板，复制后粘贴到自己的 Gemini / DeepSeek 中即可生成报告。</p>
+
+  <div class="mvp-checklist reveal">
+    <div class="mvp-row"><div class="mvp-dot"></div><span>Gemini 深度研究提示词（明确要求收集六类用户行为证据）</span></div>
+    <div class="mvp-row"><div class="mvp-dot"></div><span>DeepSeek 结构化拆解提示词（直接套六阶段框架）</span></div>
+    <div class="mvp-row"><div class="mvp-dot"></div><span>一份示例报告（以"虬龙"为案例，跑通全流程）</span></div>
+    <div class="mvp-row"><div class="mvp-dot"></div><span>使用说明（3 分钟上手，15 分钟出报告）</span></div>
+  </div>
+
+  <div class="cta-buttons reveal">
+    <a href="#" class="btn-primary">获取提示词模板 →</a>
+    <a href="#" class="btn-secondary">查看示例报告</a>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="footer-quote">
+    "这不是答案之书，而是一次又一次的战略模拟训练。<br>
+    站上成功者的肩膀，不是为了复制他们的路，而是为了走好自己的路。"
+  </div>
+  <div class="footer-right">
+    CEO 用户战略模拟器<br>
+    <span style="color:var(--gold-dim);">Powered by Gemini + DeepSeek</span>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Input interaction
+  const input = document.querySelector('.hero-input');
+  const btn = document.querySelector('.hero-btn');
+
+  btn.addEventListener('click', () => {
+    const val = input.value.trim();
+    if (val) {
+      btn.textContent = '分析中…';
+      btn.style.background = '#8B6E2E';
+      setTimeout(() => {
+        btn.textContent = '✓ 报告生成中';
+        setTimeout(() => {
+          btn.textContent = '开始分析 →';
+          btn.style.background = '';
+          input.value = '';
+        }, 2000);
+      }, 1500);
+    }
+  });
+
+  // Parallax on glow
+  document.addEventListener('mousemove', (e) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 20;
+    const y = (e.clientY / window.innerHeight - 0.5) * 20;
+    document.querySelector('.hero-glow').style.transform = `translate(${x}px, ${y}px)`;
+  });
+</script>
+
+</body>
+</html>
