@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anbo Service Design - Product Development Coordination</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #3b82f6;
+            --accent-light: #60a5fa;
+            --accent-warm: #f97316;
+            --text-light: #f1f5f9;
+            --text-muted: #cbd5e1;
+            --border: #334155;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, #0a0e27 100%);
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header & Navigation */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.7);
+            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent-warm) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-sub {
+            font-size: 0.65rem;
+            opacity: 0.8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        nav-right {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .lang-switch {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(51, 65, 85, 0.5);
+            padding: 0.4rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .lang-btn {
+            padding: 0.4rem 0.8rem;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding-top: 8rem;
+            padding-bottom: 6rem;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-30px); }
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -2px;
+            animation: slideInUp 0.8s ease;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            animation: slideInUp 0.8s ease 0.2s backwards;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            animation: slideInUp 0.8s ease 0.4s backwards;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent-light);
+            border: 2px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Sections */
+        section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 5rem 2rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+        }
+
+        /* Services Section */
+        .services {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.3) 0%, transparent 100%);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .service-card {
+            background: linear-gradient(135deg, rgba(51, 65, 85, 0.3) 0%, rgba(30, 41, 59, 0.3) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .service-card:hover::before {
+            left: 100%;
+        }
+
+        .service-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.2);
+        }
+
+        .service-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .service-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .service-card p {
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        /* Process Section */
+        .process {
+            background: linear-gradient(180deg, transparent 0%, rgba(30, 41, 59, 0.3) 100%);
+        }
+
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--accent) 0%, var(--accent-warm) 100%);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .timeline-item:nth-child(odd) {
+            margin-left: 0;
+            margin-right: 52%;
+            text-align: right;
+        }
+
+        .timeline-item:nth-child(even) {
+            margin-left: 52%;
+            margin-right: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border: 4px solid var(--primary);
+            border-radius: 50%;
+            left: 50%;
+            top: 20px;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        .timeline-content {
+            background: linear-gradient(135deg, rgba(51, 65, 85, 0.3) 0%, rgba(30, 41, 59, 0.3) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-content:hover {
+            border-color: var(--accent);
+            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.2);
+        }
+
+        .timeline-content h3 {
+            color: var(--accent-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-content p {
+            color: var(--text-muted);
+        }
+
+        /* Advantages Section */
+        .advantages {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.3) 0%, transparent 100%);
+        }
+
+        .advantages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .advantage-item {
+            padding: 2rem;
+            border-left: 3px solid var(--accent-warm);
+            background: rgba(249, 115, 22, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .advantage-item:hover {
+            border-left-color: var(--accent-light);
+            background: rgba(59, 130, 246, 0.05);
+            transform: translateX(5px);
+        }
+
+        .advantage-item h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .advantage-item p {
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        /* Contact Section */
+        .contact {
+            background: linear-gradient(180deg, transparent 0%, rgba(30, 41, 59, 0.5) 100%);
+            text-align: center;
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .contact-item {
+            background: linear-gradient(135deg, rgba(51, 65, 85, 0.3) 0%, rgba(30, 41, 59, 0.3) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .contact-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+
+        .contact-item-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-light);
+        }
+
+        .contact-item h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-item p {
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .timeline::before {
+                left: 10px;
+            }
+
+            .timeline-item:nth-child(odd),
+            .timeline-item:nth-child(even) {
+                margin-left: 50px;
+                margin-right: 0;
+                text-align: left;
+            }
+
+            .timeline-dot {
+                left: 0;
+            }
+
+            nav {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .lang-switch {
+                width: 100%;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent-warm) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">
+                ANBO <div class="logo-sub">Service Design</div>
+            </div>
+            <nav-right>
+                <div class="lang-switch">
+                    <button class="lang-btn active" onclick="switchLang('en')">EN</button>
+                    <button class="lang-btn" onclick="switchLang('zh')">中文</button>
+                </div>
+            </nav-right>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 lang="en" class="lang-en">Global Product <span class="text-gradient">Development Excellence</span></h1>
+            <h1 lang="zh" class="lang-zh hidden">全球产品 <span class="text-gradient">研发卓越之选</span></h1>
+            
+            <p class="subtitle lang-en">
+                Accelerating product innovation for overseas enterprises. Connect with Shenzhen's finest R&D and manufacturing resources.
+            </p>
+            <p class="subtitle lang-zh hidden">
+                为海外企业加速产品创新。连接深圳顶级的研发和生产资源。
+            </p>
+
+            <div class="hero-buttons">
+                <button class="btn btn-primary" onclick="document.querySelector('.services').scrollIntoView()">
+                    <span class="lang-en">Explore Services</span>
+                    <span class="lang-zh hidden">了解服务</span>
+                </button>
+                <button class="btn btn-secondary" onclick="document.querySelector('.contact').scrollIntoView()">
+                    <span class="lang-en">Get in Touch</span>
+                    <span class="lang-zh hidden">联系我们</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services">
+        <h2 class="section-title lang-en">Our Services</h2>
+        <h2 class="section-title lang-zh hidden">我们的服务</h2>
+        
+        <p class="section-subtitle lang-en">
+            Comprehensive product development coordination solutions tailored for international enterprises
+        </p>
+        <p class="section-subtitle lang-zh hidden">
+            为国际企业量身定制的全面产品开发协调解决方案
+        </p>
+
+        <div class="services-grid">
+            <!-- Service 1 -->
+            <div class="service-card">
+                <div class="service-icon">🔍</div>
+                <h3 class="lang-en">Resource Discovery</h3>
+                <h3 class="lang-zh hidden">资源发现</h3>
+                <p class="lang-en">
+                    Identify and connect with qualified R&D teams and manufacturing partners in Shenzhen's thriving ecosystem.
+                </p>
+                <p class="lang-zh hidden">
+                    在深圳蓬勃发展的生态系统中识别并连接合格的研发团队和制造合作伙伴。
+                </p>
+            </div>
+
+            <!-- Service 2 -->
+            <div class="service-card">
+                <div class="service-icon">🤝</div>
+                <h3 class="lang-en">Strategic Matching</h3>
+                <h3 class="lang-zh hidden">战略匹配</h3>
+                <p class="lang-en">
+                    Expert matching of your project requirements with the most suitable technical partners and suppliers.
+                </p>
+                <p class="lang-zh hidden">
+                    将您的项目需求与最合适的技术合作伙伴和供应商进行专业匹配。
+                </p>
+            </div>
+
+            <!-- Service 3 -->
+            <div class="service-card">
+                <div class="service-icon">📊</div>
+                <h3 class="lang-en">Project Coordination</h3>
+                <h3 class="lang-zh hidden">项目协调</h3>
+                <p class="lang-en">
+                    End-to-end coordination ensuring seamless communication and project execution from concept to production.
+                </p>
+                <p class="lang-zh hidden">
+                    端到端的协调，确保从概念到生产的无缝沟通和项目执行。
+                </p>
+            </div>
+
+            <!-- Service 4 -->
+            <div class="service-card">
+                <div class="service-icon">💰</div>
+                <h3 class="lang-en">Cost Optimization</h3>
+                <h3 class="lang-zh hidden">成本优化</h3>
+                <p class="lang-en">
+                    Leverage our local expertise to reduce costs while maintaining quality standards and production efficiency.
+                </p>
+                <p class="lang-zh hidden">
+                    利用我们的本地专业知识降低成本，同时保持质量标准和生产效率。
+                </p>
+            </div>
+
+            <!-- Service 5 -->
+            <div class="service-card">
+                <div class="service-icon">🌐</div>
+                <h3 class="lang-en">Bridge Services</h3>
+                <h3 class="lang-zh hidden">桥接服务</h3>
+                <p class="lang-en">
+                    Language, culture, and regulatory compliance support to streamline your operations in China.
+                </p>
+                <p class="lang-zh hidden">
+                    提供语言、文化和法规合规支持，简化您在中国的运营。
+                </p>
+            </div>
+
+            <!-- Service 6 -->
+            <div class="service-card">
+                <div class="service-icon">✅</div>
+                <h3 class="lang-en">Quality Assurance</h3>
+                <h3 class="lang-zh hidden">质量保证</h3>
+                <p class="lang-en">
+                    Rigorous testing and quality control throughout the product development and manufacturing process.
+                </p>
+                <p class="lang-zh hidden">
+                    在整个产品开发和制造过程中进行严格的测试和质量控制。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="process">
+        <h2 class="section-title lang-en">Our Process</h2>
+        <h2 class="section-title lang-zh hidden">我们的流程</h2>
+        
+        <p class="section-subtitle lang-en">
+            A proven methodology that transforms your vision into market-ready products
+        </p>
+        <p class="section-subtitle lang-zh hidden">
+            经过验证的方法，将您的愿景转化为市场就绪的产品
+        </p>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <h3 class="lang-en">1. Initial Consultation</h3>
+                    <h3 class="lang-zh hidden">1. 初期咨询</h3>
+                    <p class="lang-en">
+                        We understand your product vision, technical requirements, and business objectives.
+                    </p>
+                    <p class="lang-zh hidden">
+                        我们了解您的产品愿景、技术需求和业务目标。
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <h3 class="lang-en">2. Partner Identification</h3>
+                    <h3 class="lang-zh hidden">2. 合作伙伴识别</h3>
+                    <p class="lang-en">
+                        We curate a selection of qualified R&D and manufacturing partners matching your criteria.
+                    </p>
+                    <p class="lang-zh hidden">
+                        我们甄选符合您需求的合格研发和制造合作伙伴。
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <h3 class="lang-en">3. Strategic Matching</h3>
+                    <h3 class="lang-zh hidden">3. 战略匹配</h3>
+                    <p class="lang-en">
+                        Facilitated introduction and negotiation with your ideal technical partner.
+                    </p>
+                    <p class="lang-zh hidden">
+                        与您理想的技术合作伙伴进行协调介绍和谈判。
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <h3 class="lang-en">4. Development Coordination</h3>
+                    <h3 class="lang-zh hidden">4. 开发协调</h3>
+                    <p class="lang-en">
+                        Ongoing project management, milestone tracking, and stakeholder communication.
+                    </p>
+                    <p class="lang-zh hidden">
+                        持续的项目管理、里程碑跟踪和利益相关者沟通。
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <h3 class="lang-en">5. Production Launch</h3>
+                    <h3 class="lang-zh hidden">5. 生产启动</h3>
+                    <p class="lang-en">
+                        Transition from development to mass production with quality assurance and support.
+                    </p>
+                    <p class="lang-zh hidden">
+                        从开发过渡到大规模生产，并进行质量保证和支持。
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <h3 class="lang-en">6. Ongoing Support</h3>
+                    <h3 class="lang-zh hidden">6. 持续支持</h3>
+                    <p class="lang-en">
+                        Long-term partnership with continuous optimization and scaling support.
+                    </p>
+                    <p class="lang-zh hidden">
+                        长期合作伙伴关系，提供持续的优化和扩展支持。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advantages Section -->
+    <section class="advantages">
+        <h2 class="section-title lang-en">Why Choose Anbo?</h2>
+        <h2 class="section-title lang-zh hidden">为什么选择岸泊？</h2>
+        
+        <p class="section-subtitle lang-en">
+            We transform product development challenges into competitive advantages
+        </p>
+        <p class="section-subtitle lang-zh hidden">
+            我们将产品开发挑战转化为竞争优势
+        </p>
+
+        <div class="advantages-grid">
+            <div class="advantage-item">
+                <h3 class="lang-en">📍 Local Expertise</h3>
+                <h3 class="lang-zh hidden">📍 本地专业知识</h3>
+                <p class="lang-en">
+                    Deep-rooted connections within Shenzhen's innovation ecosystem. We know the market, the players, and the opportunities.
+                </p>
+                <p class="lang-zh hidden">
+                    在深圳创新生态系统中根深蒂固的联系。我们了解市场、参与者和机遇。
+                </p>
+            </div>
+
+            <div class="advantage-item">
+                <h3 class="lang-en">💡 Cost Efficiency</h3>
+                <h3 class="lang-zh hidden">💡 成本效率</h3>
+                <p class="lang-en">
+                    Access to competitive pricing and economies of scale. Reduce your product development costs significantly.
+                </p>
+                <p class="lang-zh hidden">
+                    获得具有竞争力的定价和规模经济。显著降低产品开发成本。
+                </p>
+            </div>
+
+            <div class="advantage-item">
+                <h3 class="lang-en">⚡ Time-to-Market</h3>
+                <h3 class="lang-zh hidden">⚡ 上市时间</h3>
+                <p class="lang-en">
+                    Accelerate your product launch with experienced coordination and streamlined processes.
+                </p>
+                <p class="lang-zh hidden">
+                    通过经验丰富的协调和精简流程加快产品发布。
+                </p>
+            </div>
+
+            <div class="advantage-item">
+                <h3 class="lang-en">🛡️ Risk Mitigation</h3>
+                <h3 class="lang-zh hidden">🛡️ 风险缓解</h3>
+                <p class="lang-en">
+                    Navigate regulatory, technical, and cultural challenges with our comprehensive support.
+                </p>
+                <p class="lang-zh hidden">
+                    通过我们的全面支持应对法规、技术和文化挑战。
+                </p>
+            </div>
+
+            <div class="advantage-item">
+                <h3 class="lang-en">🌟 Quality Focus</h3>
+                <h3 class="lang-zh hidden">🌟 质量焦点</h3>
+                <p class="lang-en">
+                    Rigorous quality standards ensure your products meet international specifications and certifications.
+                </p>
+                <p class="lang-zh hidden">
+                    严格的质量标准确保您的产品符合国际规格和认证。
+                </p>
+            </div>
+
+            <div class="advantage-item">
+                <h3 class="lang-en">🤝 Partnership Model</h3>
+                <h3 class="lang-zh hidden">🤝 合作模式</h3>
+                <p class="lang-en">
+                    We succeed when you succeed. Your growth is our growth—a true partnership.
+                </p>
+                <p class="lang-zh hidden">
+                    我们成功取决于您的成功。您的增长就是我们的增长——真正的合作伙伴关系。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact">
+        <h2 class="section-title lang-en">Let's Connect</h2>
+        <h2 class="section-title lang-zh hidden">联系我们</h2>
+        
+        <p class="section-subtitle lang-en">
+            Ready to transform your product vision into reality? Get in touch with our team.
+        </p>
+        <p class="section-subtitle lang-zh hidden">
+            准备好将您的产品愿景变为现实了吗？与我们的团队取得联系。
+        </p>
+
+        <div class="contact-info">
+            <div class="contact-item">
+                <div class="contact-item-icon">📍</div>
+                <h3 class="lang-en">Address</h3>
+                <h3 class="lang-zh hidden">地址</h3>
+                <p class="lang-en">Shenzhen, China</p>
+                <p class="lang-zh hidden">深圳，中国</p>
+            </div>
+
+            <div class="contact-item">
+                <div class="contact-item-icon">✉️</div>
+                <h3 class="lang-en">Email</h3>
+                <h3 class="lang-zh hidden">邮箱</h3>
+                <p><a href="mailto:gao@anboservice.com" style="color: var(--accent-light); text-decoration: none;">gao@anboservice.com</a></p>
+            </div>
+
+
+        </div>
+
+        <p class="lang-en">
+            <strong>Anbo Service Design</strong> — Bridging Innovation Between Continents
+        </p>
+        <p class="lang-zh hidden">
+            <strong>岸泊服务设计</strong> — 连接大陆之间的创新
+        </p>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p class="lang-en">
+            © 2024 Anbo Service Design (深圳市岸泊服务设计信息科技有限公司). All rights reserved.
+        </p>
+        <p class="lang-zh hidden">
+            © 2024 岸泊服务设计 (Anbo Service Design). 版权所有。
+        </p>
+    </footer>
+
+    <script>
+        function switchLang(lang) {
+            const elements = document.querySelectorAll('[lang]');
+            const buttons = document.querySelectorAll('.lang-btn');
+
+            elements.forEach(el => {
+                if (el.lang === lang) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+
+            // Also hide/show all lang-specific content
+            const langElements = document.querySelectorAll('.lang-en, .lang-zh');
+            langElements.forEach(el => {
+                if (el.classList.contains('lang-' + lang)) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+
+            // Update button states
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Save preference
+            localStorage.setItem('preferredLang', lang);
+        }
+
+        // Load saved language preference
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedLang = localStorage.getItem('preferredLang') || 'en';
+            switchLang(savedLang);
+        });
+    </script>
+</body>
+</html>
